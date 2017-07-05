@@ -6,6 +6,7 @@ from collections import Counter
 import brotli
 import numpy as np
 
+from .compress import get_replaces
 from .decompress import decompress_csv
 
 
@@ -45,66 +46,7 @@ def get_delta(lines, i=1):
             for i in range(ncols):
                 tokens.append(str(line[i] - last[i]))
             last = line
-    return ','.join(tokens)
-
-
-def get_replaces(delta):
-    # don't try to optimise if not many value
-    if len(delta) < 10000:
-        return [], delta
-
-    ic = 0
-    codes = 'abcdefghijklmnopqrstuvwxyz'
-    replaced = delta
-    replaces = []
-    while True:
-        c = Counter(replaced)
-        freq5 = [k for k, v in c.most_common(5)]
-        length = len(replaced)
-        if length < 10:
-            break
-        cc = Counter()
-        for k in range(min(1000, len(delta) // 2)):
-            i = random.randint(0, length - 6)
-            if replaced[i] in freq5:
-                cc[replaced[i:i+3]] += 1
-                cc[replaced[i:i+4]] += 1
-                cc[replaced[i:i+5]] += 1
-                cc[replaced[i:i+6]] += 1
-
-        ccc = Counter()
-        entropy1 = 0
-        for ch in c:
-            prob = c[ch] / length
-            entropy1 -= prob * math.log2(prob)
-        entropy1 *= length / 8
-        
-        for k, v in cc.most_common(5):
-            chs = set(k)
-            entropy2 = 0
-            length2 = length - (len(k) - 1) * replaced.count(k)
-            for ch in c:
-                if ch in chs:
-                    prob = (c[ch] - k.count(ch) * v) / length2
-                else:
-                    prob = c[ch] / length2
-                if prob > 0:
-                    entropy2 -= prob * math.log2(prob)
-            prob = v / length2
-            entropy2 -= prob * math.log2(prob)
-            entropy2 *= length2 / 8
-            
-            if (entropy1 - entropy2) / entropy1 > 0.005:
-                ccc[k] = entropy1 - entropy2
-        if not ccc:
-            break
-        k, v = ccc.most_common(1)[0]
-        replaces.append((k, codes[ic]))
-        replaced = replaced.replace(k, codes[ic])
-        ic += 1
-        if ic > 20:
-            break
-    return replaces, replaced
+    return bytearray(','.join(tokens).encode('utf-8'))
 
 
 def compress(data, precision=2):
@@ -119,8 +61,8 @@ def compress(data, precision=2):
     headers = lines[0]
     delta = get_delta(lines, i=1)
     replaces, replaced = get_replaces(delta)
-    result = brotli.compress('{}+{}+{}+{}+{}'.format(
-        ncols, headers, divides, replaces, replaced).encode('utf-8'))
+    header = '{}+{}+{}+{}+'.format(ncols, headers, divides, replaces)
+    result = brotli.compress(header.encode('utf-8') + replaced)
     return result
 
 

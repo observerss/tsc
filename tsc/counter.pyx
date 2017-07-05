@@ -27,11 +27,17 @@ cdef class Int64HashTable(HashTable):
         k = kh_get_int64(self.table, key)
         return k != self.table.n_buckets
 
+    def __bool__(self):
+        return self.table.size > 0
+
     def sizeof(self, deep=False):
         """ return the size of my table in bytes """
         return self.table.n_buckets * (sizeof(int64_t) + # keys
                                        sizeof(size_t) + # vals
                                        sizeof(uint32_t)) # flags
+
+    cpdef size(self):
+        return self.table.size
 
     cpdef get_item(self, int64_t val):
         cdef khiter_t k
