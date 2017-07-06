@@ -3,7 +3,7 @@ from distutils.core import setup
 from setuptools import find_packages
 
 setup(name='tsc',
-      version='0.1',
+      version='0.1.1',
       description='TimeSeries Compressor',
       author='Jingchao Hu',
       author_email='jingchaohu@gmail.com',
