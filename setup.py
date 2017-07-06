@@ -1,9 +1,11 @@
 #!/usr/bin/env python
-from distutils.core import setup
+import sys
+from setuptools import setup
+from setuptools.command.install import install
 from setuptools import find_packages
 
 setup(name='tsc',
-      version='0.1.1',
+      version='0.1.2',
       description='TimeSeries Compressor',
       author='Jingchao Hu',
       author_email='jingchaohu@gmail.com',
