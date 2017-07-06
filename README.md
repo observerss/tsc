@@ -1,4 +1,4 @@
-# TSC(Time Series Compressor))))
+# TSC(Time Series Compressor)
 
 A compressor that specialize in compressing and decompressing time series data
 

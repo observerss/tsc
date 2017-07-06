@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-from setuptools import setup, find_packages
+from distutils.core import setup
+from setuptools import find_packages
 
 setup(name='tsc',
       version='0.1',
@@ -13,6 +14,7 @@ setup(name='tsc',
       install_requires=['numpy', 'cython', 'brotli', 'pandas'],
       classifiers=[
         'License :: OSI Approved :: BSD License',
+        'Programming Language :: Python',
         'Programming Language :: Python :: 3',
       ]
      )

@@ -4,7 +4,7 @@ cimport numpy as np
 from libc.math cimport round
 
 
-cpdef parse_csv(bytearray csv, int precision=2):
+cpdef parse_csv(bytearray csv, int precision=3):
     """ returns ncols, headers, divides, delta array"""
     cdef:
         np.int64_t i, j, k, n, row, size, dsize, ch, sign
@@ -133,7 +133,7 @@ cpdef parse_csv(bytearray csv, int precision=2):
     return ncols, headers, list(divides), bytearray(delta[:dsize])
 
 
-cpdef parse_np(list la, int precision=2):
+cpdef parse_np(list la, int precision=3):
     cdef:
         tuple headers
         list raws = []

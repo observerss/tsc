@@ -48,7 +48,7 @@ def decompress(data):
             data = data.replace(v.encode('utf-8'), k.encode('utf-8'))
         headers = ','.join(headers) + '\n'
         nrows = (data.count(b',') + 1) // ncols
-        divides = array('i', [int(math.log(d) / math.log(10)) for d in divides])
+        divides = array('i', [math.ceil(math.log(d) / math.log(10)) for d in divides])
         return headers + decompress_csv(ncols, nrows, divides, bytearray(data)).decode('utf-8')
     else:
         return brotli.decompress(raw)
