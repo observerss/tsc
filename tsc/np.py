@@ -10,7 +10,6 @@ from .decompress import decompress_df
 
 
 def compress(array, precision=2):
-    """ array should be a np.recarray object """
     if isinstance(array, np.recarray):
         nrows = array.shape[0]
         headers = array.dtype.names
@@ -27,13 +26,11 @@ def compress(array, precision=2):
         ncols = len(array)
         dtypes, divides, raws, i8n, delta = parse_np(array, precision=precision)
         replaces, replaced = get_replaces(delta)
-        header = '{}+{}+{}+{}+{}+{}+'.format(ncols, nrows, headers, dtypes, divides, replaces)
+        header = '{}+{}+{}+{}+{}+{}+'.format(i8n, nrows, headers, dtypes, divides, replaces)
         result = b'+n\x00' + brotli.compress(header.encode('utf-8')
             + b'+'.join([replaced] + [r.tobytes() for r in raws]))
     except:
-        import traceback
-        traceback.print_exc()
-        result = brotli.compress(bytes(array))
+        result = b'+n\x01' + brotli.compress(str(array.dtype.descr).encode('utf-8') + b'+' + array.tobytes())
     return result
 
 
@@ -54,5 +51,10 @@ def decompress(data):
             data = data.replace(v.encode('utf-8'), k.encode('utf-8'))
 
         return decompress_df(ncols, nrows, divides, dtypes, headers, raws, bytearray(data))
+    elif data.startswith(b'+n\x01'):
+        raw = brotli.decompress(data[3:])
+        dtypes, data = raw.split(b'+')
+        dtypes = eval(dtypes, {}, {})
+        return np.frombuffer(data, dtypes)
     else:
-        return brotli.decompress(raw)
+        return brotli.decompress(data)

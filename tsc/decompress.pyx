@@ -170,6 +170,17 @@ def decompress_df(unsigned int ncols, unsigned int nrows, divs, dtypes,
         # restore to np.recarray, according to dtypes
         arr = np.asanyarray(nums)
         out = np.recarray(nrows, dtype=list(zip(headers, dtypes)))
+        j, k = 0, 0
         for i, dt in enumerate(dtypes):
-            out[headers[i]] = arr[i::ncols].astype(dt)
+            type_ = np.dtype(dt)
+            if np.issubdtype(type_, np.int) \
+                    or np.issubdtype(type_, np.float) \
+                    or np.issubdtype(type_, np.datetime64) \
+                    or np.issubdtype(type_, np.timedelta64):
+                out[headers[i]] = arr[j::ncols].astype(dt)
+                j += 1
+            else:
+                # assign raw data
+                out[headers[i]] = np.frombuffer(raws[k], dtype=type_)
+                k += 1
         return out

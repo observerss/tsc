@@ -136,7 +136,7 @@ cpdef parse_np(list la, int precision=2):
         np.int32_t[:] divides
         np.ndarray a
         np.float64_t[:] fa
-        np.int32_t nrows, ncols, i, j, dsize, tempi, i8n = 0, divide
+        np.int32_t nrows, ncols, i, j, k, dsize, tempi, i8n = 0, divide
         np.int64_t[:] last, ia, ai
         np.int64_t val, inum, m
         np.uint8_t[:] delta
@@ -149,7 +149,7 @@ cpdef parse_np(list la, int precision=2):
     for i in range(ncols):
         a = la[i]
         type_ = a.dtype
-        dtypes.append(type_.name)
+        dtypes.append(type_.str)
         
         if np.issubdtype(type_, np.float):
             fa = a.astype('<f8')
@@ -168,14 +168,17 @@ cpdef parse_np(list la, int precision=2):
             divide = 10 ** divide
             divides[i] = divide
             for j in range(nrows):
-                ai[j*ncols+i] = <np.int64_t>round(fa[j] * divide)
+                ai[j*ncols+i8n] = <np.int64_t>round(fa[j] * divide)
             i8n += 1
-        elif np.issubdtype(type_, np.int) or np.issubdtype(type_, np.bool) \
-                or np.issubdtype(np.datetime64) or np.issubdtype(np.timedelta64):
+        elif np.issubdtype(type_, np.int) \
+                or np.issubdtype(type_, np.datetime64) \
+                or np.issubdtype(type_, np.timedelta64):
             ia = a.astype('i8')
             for j in range(nrows):
-                ai[j*ncols+i] = <np.int64_t>ia[i]
+                ai[j*ncols+i8n] = <np.int64_t>ia[i]
             i8n += 1
+        elif type_ is np.object or type_ is np.dtype('S'):
+            raise TypeError('cannot compress object/S data, try convert to np.character first')
         else:
             raws.append(a)
             
