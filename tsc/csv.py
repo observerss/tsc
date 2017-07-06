@@ -11,7 +11,7 @@ from .compress import get_replaces
 from .decompress import decompress_csv
 
 
-def compress(data, precision=2):
+def compress(data, precision=3):
     """ data should looks like below,
     
     a,b,c
@@ -27,6 +27,8 @@ def compress(data, precision=2):
         header = '{}+{}+{}+{}+'.format(ncols, headers, divides, replaces)
         result = b'+c\x00' + brotli.compress(header.encode('utf-8') + replaced)
     except:
+        import traceback
+        traceback.print_exc()
         result = brotli.compress(bytes(data))
     return result
 

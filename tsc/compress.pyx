@@ -84,7 +84,7 @@ def get_replaces(bytearray delta):
         np.int64_t val, k
         
     # don't try to optimise if not many value
-    if len(delta) < 10000:
+    if len(delta) < 4096:
         return [], delta
 
     ic = 0

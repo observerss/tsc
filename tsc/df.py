@@ -10,7 +10,7 @@ from .parser import parse_np
 from .compress import get_replaces
 
 
-def compress(df, precision=2):
+def compress(df, precision=3):
     headers = df.columns.tolist()
     array = [df[c].values for c in headers]
     nrows = df.shape[0]

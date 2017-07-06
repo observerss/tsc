@@ -44,17 +44,21 @@ cpdef parse_csv(bytearray csv, int precision=2):
                 sign = 1
             num = 0
             div = 0
-            while i < n and 48 <= ch <= 57:
+            while 48 <= ch <= 57:
                 num = num * 10 + ch - 48
                 i += 1
+                if i >= n:
+                    break
                 ch = csv[i]
             if ch == 46:
                 i += 1
                 ch = csv[i]
-                while i < n and 48 <= ch <= 57:
+                while 48 <= ch <= 57:
                     if div < precision:
                         num = num * 10 + ch - 48
                         i += 1
+                        if i >= n:
+                            break
                         ch = csv[i]
                         div += 1
             if sign == -1:
@@ -74,7 +78,9 @@ cpdef parse_csv(bytearray csv, int precision=2):
             elif ch == 10:
                 if j != ncols - 1:
                     raise ValueError(r'csv format error, should be ",", but got "\n"')
-            else:
+            elif i >= n:
+                break
+            else:  
                 raise ValueError(r'csv format error, should be one of ",\n", but got "{}"'.format(chr(ch)))
                 
             i += 1

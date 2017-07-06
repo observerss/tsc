@@ -9,7 +9,7 @@ from .compress import get_replaces
 from .decompress import decompress_df
 
 
-def compress(array, precision=2):
+def compress(array, precision=3):
     if isinstance(array, np.recarray):
         nrows = array.shape[0]
         headers = array.dtype.names

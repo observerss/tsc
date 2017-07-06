@@ -13,13 +13,13 @@ from .df import compress as dfc, decompress as dfd
 from .csv import compress as csvc, decompress as csvd
 
 
-def compress(data):
+def compress(data, prec=3):
     if isinstance(data, str) or isinstance(data, bytes):
-        return csvc(data)
+        return csvc(data, prec)
     elif isinstance(data, np.ndarray):
-        return npc(data)
+        return npc(data, prec)
     elif isinstance(data, pd.DataFrame):
-        return dfd(data)
+        return dfd(data, prec)
 
 
 def decompress(data):
