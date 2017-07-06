@@ -101,7 +101,7 @@ def get_replaces(bytearray delta):
             ckeys[i] = k
             i += 1
         length = len(replaced)
-        if length < 10:
+        if length < 1000:
             break
 
         # count char pairs frequency
@@ -116,13 +116,15 @@ def get_replaces(bytearray delta):
                 ch3 = replaced[i+3]
                 ch4 = replaced[i+4]
                 ch5 = replaced[i+5]
-                val = (ch0 << 16) + (ch1 << 8) + ch2
+                val = (ch0 << 8) + ch1
                 cc.increase(val, 1)
-                val = (val << 16) + ch3
+                val = (val << 8) + ch2
                 cc.increase(val, 1)
-                val = (val << 16) + ch4
+                val = (val << 8) + ch3
                 cc.increase(val, 1)
-                val = (val << 16) + ch5
+                val = (val << 8) + ch4
+                cc.increase(val, 1)
+                val = (val << 8) + ch5
                 cc.increase(val, 1)
             j += 1
 
@@ -159,7 +161,7 @@ def get_replaces(bytearray delta):
         if not ccc:
             break
         k, v = ccc.most_common(1)[0]
-        replaces.append((keys_to_str(get_keys(k)), codes[ic]))
+        replaces.append((keys_to_str(get_keys(k)), chr(codes[ic])))
         replaced = replaced.replace(keys_to_str(get_keys(k)).encode('utf-8'), codes[ic:ic+1])
         ic += 1
         if ic > 20:

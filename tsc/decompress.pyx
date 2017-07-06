@@ -1,19 +1,20 @@
 cimport numpy as np
+import numpy as np
 cimport cython
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 
 @cython.cdivision(True)
 def decompress_csv(unsigned int ncols,unsigned int nrows, int[:] divides, unsigned char[:] data):
     cdef:
-        unsigned int i, j, l, n, row, digs
-        int num, sign, k, d
+        np.uint64_t i, j, l, n, row, digs
+        np.int64_t num, sign, k, d
         unsigned char ch
-        int[:] last
+        np.int64_t[:] last
         unsigned int[11] temp
         bytes result
         
     n = len(data)
-    last = np.zeros(ncols, dtype=np.int32)
+    last = np.zeros(ncols, dtype=np.int64)
     
     # 10 times should be big enough for new csvs
     out = <unsigned char*>PyMem_Malloc(n * 10)
