@@ -109,3 +109,67 @@ def decompress_csv(unsigned int ncols,unsigned int nrows, int[:] divides, unsign
     result = out[:l]
     PyMem_Free(out)
     return result
+
+
+def decompress_df(unsigned int ncols, unsigned int nrows, divs, dtypes,
+                  headers, raws, unsigned char[:] data):
+    cdef:
+        np.uint64_t i, j, n, row, digs
+        np.int64_t num, sign, k, d
+        unsigned char ch
+        np.int64_t[:] last
+        unsigned int[11] temp
+        np.int64_t[:] nums
+        np.int32_t[:] divides = np.array(divs, dtype=np.int32)
+        np.ndarray out, arr
+
+    n = len(data)
+    last = np.zeros(ncols, dtype=np.int64)
+    nums = np.empty(ncols * nrows, dtype=np.int64)
+    
+    i, j, k = 0, 0, 0
+    row = 0
+    while i < n and row < nrows:
+        for j in range(ncols):
+            # parse num
+            d = divides[j]
+            ch = data[i]
+            if ch == 45:
+                sign = -1
+                i += 1
+                ch = data[i]
+            else:
+                sign = 1
+            num = 0
+            digs = 0
+            while 48 <= ch <= 57:
+                num = num * 10 + ch - 48
+                digs += 1
+                i += 1
+                if i >= n:
+                    break
+                ch = data[i]
+            num = sign * num + last[j]
+            last[j] = num
+            # write num
+            nums[k] = num
+            k += 1
+            # skip ','
+            i += 1
+        row += 1
+
+    if len(headers) == 0:
+        # should be same type, restore to np.ndarray
+        type_ = dtypes[0]
+        for dtype in dtypes:
+            if dtype != type_:
+                raise ValueError('array should be same type if no headers!')
+        arr = np.asanyarray(nums)
+        return arr.astype(type_).reshape((nrows, ncols))
+    else:
+        # restore to np.recarray, according to dtypes
+        arr = np.asanyarray(nums)
+        out = np.recarray(nrows, dtype=list(zip(headers, dtypes)))
+        for i, dt in enumerate(dtypes):
+            out[headers[i]] = arr[i::ncols].astype(dt)
+        return out

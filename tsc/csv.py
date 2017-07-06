@@ -24,17 +24,17 @@ def compress(data, precision=2):
         data = bytearray(data)
         ncols, headers, divides, delta = parse_csv(data, precision=precision)
         replaces, replaced = get_replaces(delta)
-        header = '+csv+{}+{}+{}+{}+'.format(ncols, headers, divides, replaces)
-        result = brotli.compress(header.encode('utf-8') + replaced)
+        header = '{}+{}+{}+{}+'.format(ncols, headers, divides, replaces)
+        result = b'+c\x00' + brotli.compress(header.encode('utf-8') + replaced)
     except:
         result = brotli.compress(bytes(data))
     return result
 
 
 def decompress(data):
-    raw = brotli.decompress(data)
-    if raw.startswith(b'+csv+'):
-        vals = raw[5:].split(b'+')
+    if data.startswith(b'+c\x00'):
+        raw = brotli.decompress(data[3:])
+        vals = raw.split(b'+')
         ncols, headers, divides, replaces, data = vals
         
         ncols = int(ncols)
@@ -49,4 +49,4 @@ def decompress(data):
         divides = array('i', [int(math.log(d) / math.log(10)) for d in divides])
         return headers + decompress_csv(ncols, nrows, divides, bytearray(data)).decode('utf-8')
     else:
-        return raw
+        return brotli.decompress(raw)

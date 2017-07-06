@@ -125,3 +125,92 @@ cpdef parse_csv(bytearray csv, int precision=2):
         dsize += 1
             
     return ncols, headers, list(divides), bytearray(delta[:dsize])
+
+
+cpdef parse_np(list la, int precision=2):
+    cdef:
+        tuple headers
+        list raws = []
+        list dtypes = []
+        np.float64_t f
+        np.int32_t[:] divides
+        np.ndarray a
+        np.float64_t[:] fa
+        np.int32_t nrows, ncols, i, j, dsize, tempi, i8n = 0, divide
+        np.int64_t[:] last, ia, ai
+        np.int64_t val, inum, m
+        np.uint8_t[:] delta
+        np.int32_t[22] temp
+    
+    ncols = len(la)
+    nrows = la[0].shape[0]
+    ai = np.empty(ncols*nrows, dtype=np.int64)
+    divides = np.zeros(ncols, dtype=np.int32)
+    for i in range(ncols):
+        a = la[i]
+        type_ = a.dtype
+        dtypes.append(type_.name)
+        
+        if np.issubdtype(type_, np.float):
+            fa = a.astype('<f8')
+            divide = 0
+            for j in range(nrows):
+                tempi = 0
+                f = fa[j] 
+                while f != <np.int64_t>(f):
+                    tempi += 1
+                    f *= 10 
+                    if tempi >= precision:
+                        break
+                divide = max(divide, tempi)
+                if divide >= precision:
+                    break
+            divide = 10 ** divide
+            divides[i] = divide
+            for j in range(nrows):
+                ai[j*ncols+i] = <np.int64_t>round(fa[j] * divide)
+            i8n += 1
+        elif np.issubdtype(type_, np.int) or np.issubdtype(type_, np.bool) \
+                or np.issubdtype(np.datetime64) or np.issubdtype(np.timedelta64):
+            ia = a.astype('i8')
+            for j in range(nrows):
+                ai[j*ncols+i] = <np.int64_t>ia[i]
+            i8n += 1
+        else:
+            raws.append(a)
+            
+    dsize = 0
+    delta = np.empty(max(1000, nrows * i8n * 16), dtype=np.uint8)
+    last = np.zeros(i8n, dtype=np.int64)
+    for i in range(nrows):
+        for j in range(i8n):
+            val = ai[i*ncols+j]
+            inum = val - last[j]
+            last[j] = val
+            if inum == 0:
+                delta[dsize] = 48
+                dsize += 1
+            else:
+                if inum < 0:
+                    delta[dsize] = 45
+                    dsize += 1
+                    inum = - inum
+
+                tempi = 0
+                temp[0] = inum % 10
+                inum //= 10
+                tempi += 1
+                while inum > 0:
+                    temp[tempi] = inum % 10
+                    inum //= 10
+                    tempi += 1
+
+                # flush to delta
+                while tempi > 0:
+                    tempi -= 1
+                    delta[dsize] = temp[tempi] + 48
+                    dsize += 1
+            # append comma
+            delta[dsize] = 44
+            dsize += 1
+    return dtypes, list(divides), raws, i8n, bytearray(delta[:dsize])
