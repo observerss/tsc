@@ -13,21 +13,21 @@ from .df import compress as dfc, decompress as dfd
 from .csv import compress as csvc, decompress as csvd
 
 
-def compress(data, prec=3):
+def compress(data, precision=3):
     if isinstance(data, str) or isinstance(data, bytes):
-        return csvc(data, prec)
+        return csvc(data, precision)
     elif isinstance(data, np.ndarray):
-        return npc(data, prec)
+        return npc(data, precision)
     elif isinstance(data, pd.DataFrame):
-        return dfd(data, prec)
+        return dfd(data, precision)
 
 
-def decompress(data):
+def decompress(data, format=None):
     if data.startswith(b'+c\x00'):
-        return csvd(data)
+        return csvd(data, format)
     elif data.startswith(b'+n\x00'):
-        return npd(data)
+        return npd(data, format)
     elif data.startswith(b'+d\x00'):
-        return dfd(data)
+        return dfd(data, format)
     else:
         return brotli.decompress(data)

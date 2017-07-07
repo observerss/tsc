@@ -23,7 +23,7 @@ def compress(df, precision=3):
     return result
 
 
-def decompress(data):
+def decompress(data, format=None):
     if data.startswith(b'+d\x00'):
         data = b'+n\x00' + data[3:]
         array = npd(data)

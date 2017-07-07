@@ -6,7 +6,7 @@ import numpy as np
 
 from .parser import parse_np
 from .compress import get_replaces
-from .decompress import decompress_df
+from .decompress import decompress_np
 
 
 def compress(array, precision=3):
@@ -34,7 +34,7 @@ def compress(array, precision=3):
     return result
 
 
-def decompress(data):
+def decompress(data, format=None):
     if data.startswith(b'+n\x00'):
         raw = brotli.decompress(data[3:])
         vals = raw.split(b'+')

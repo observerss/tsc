@@ -56,11 +56,12 @@ cpdef parse_csv(bytearray csv, int precision=3):
                 while 48 <= ch <= 57:
                     if div < precision:
                         num = num * 10 + ch - 48
-                        i += 1
-                        if i >= n:
-                            break
-                        ch = csv[i]
                         div += 1
+                    i += 1
+                    if i >= n:
+                        break
+                    ch = csv[i]
+
             if sign == -1:
                 num = - num
             if div > 0:
