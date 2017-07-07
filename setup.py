@@ -27,10 +27,13 @@ setup(name='tsc',
       package_data={'tsc': ['*.pxd', '*.pyx', 'klib/*.h']},
       include_package_data=True,
       install_requires=['numpy', 'cython', 'brotli', 'pandas'],
+      python_requires='>=3.5',
       cmdclass={'install': MyInstall},
       classifiers=[
-        'License :: OSI Approved :: BSD License',
-        'Programming Language :: Python',
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Developers',
+        'Topic :: System :: Archiving :: Compression',
+        'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
       ]
      )
