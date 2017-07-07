@@ -4,7 +4,7 @@ A compressor that specialize in compressing and decompressing time series data
 
 Input can be pure number csv with headers, numpy array or pandas dataframe
 
-It performs well only on all sized data, but will take too much time on files larger than 10M. You'd better split big file into small ones
+It performs well on all sized data, but will take too much time on files larger than 10M. You'd better split big file into small ones
 
 ## Usage
 
