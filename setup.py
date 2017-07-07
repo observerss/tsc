@@ -3,6 +3,7 @@ import sys
 from setuptools import setup
 from setuptools.command.install import install
 from setuptools import find_packages
+from tsc import __version__
 
 
 class MyInstall(install):
@@ -18,7 +19,7 @@ class MyInstall(install):
     
 
 setup(name='tsc',
-      version='0.1.2',
+      version=__version__,
       description='TimeSeries Compressor',
       author='Jingchao Hu',
       author_email='jingchaohu@gmail.com',

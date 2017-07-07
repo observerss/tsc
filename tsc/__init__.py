@@ -9,6 +9,9 @@ klib_dir = abspath(join(dirname(__file__), 'klib'))
 pyximport.install(setup_args={'include_dirs': [klib_dir, np.get_include()]})
 
 
+__version__ = '0.1.3'
+
+
 from .np import compress as npc, decompress as npd
 from .df import compress as dfc, decompress as dfd
 from .csv import compress as csvc, decompress as csvd
