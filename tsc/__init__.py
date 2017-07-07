@@ -2,6 +2,7 @@ import brotli
 import pyximport
 import numpy as np
 import pandas as pd
+from numpy import ndarray
 from os.path import join, dirname, abspath
 
 klib_dir = abspath(join(dirname(__file__), 'klib'))
@@ -16,10 +17,10 @@ from .csv import compress as csvc, decompress as csvd
 def compress(data, precision=3):
     if isinstance(data, str) or isinstance(data, bytes):
         return csvc(data, precision)
-    elif isinstance(data, np.ndarray):
+    elif isinstance(data, ndarray):
         return npc(data, precision)
     elif isinstance(data, pd.DataFrame):
-        return dfd(data, precision)
+        return dfc(data, precision)
 
 
 def decompress(data, format=None):

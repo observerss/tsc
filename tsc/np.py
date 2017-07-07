@@ -50,7 +50,7 @@ def decompress(data, format=None):
         for k, v in reversed(replaces):
             data = data.replace(v.encode('utf-8'), k.encode('utf-8'))
 
-        return decompress_df(ncols, nrows, divides, dtypes, headers, raws, bytearray(data))
+        return decompress_np(ncols, nrows, divides, dtypes, headers, raws, bytearray(data))
     elif data.startswith(b'+n\x01'):
         raw = brotli.decompress(data[3:])
         dtypes, data = raw.split(b'+')
