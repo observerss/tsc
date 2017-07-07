@@ -10,7 +10,7 @@ def decompress_csv(unsigned int ncols,unsigned int nrows, int[:] divides, unsign
         np.int64_t num, sign, k, d
         unsigned char ch
         np.int64_t[:] last
-        unsigned int[11] temp
+        np.int8_t[22] temp
         bytes result
         
     n = len(data)
@@ -111,18 +111,14 @@ def decompress_csv(unsigned int ncols,unsigned int nrows, int[:] divides, unsign
     return result
 
 
-def decompress_df(unsigned int ncols, unsigned int nrows, divs, dtypes,
-                  headers, raws, unsigned char[:] data):
+cpdef np.int64_t[:] decompress_nums(unsigned int ncols, unsigned int nrows, unsigned char[:] data):
     cdef:
         np.uint64_t i, j, n, row, digs
-        np.int64_t num, sign, k, d
+        np.int64_t num, sign, k
         unsigned char ch
         np.int64_t[:] last
-        unsigned int[11] temp
         np.int64_t[:] nums
-        np.int32_t[:] divides = np.array(divs, dtype=np.int32)
-        np.ndarray out, arr
-
+    
     n = len(data)
     last = np.zeros(ncols, dtype=np.int64)
     nums = np.empty(ncols * nrows, dtype=np.int64)
@@ -132,7 +128,6 @@ def decompress_df(unsigned int ncols, unsigned int nrows, divs, dtypes,
     while i < n and row < nrows:
         for j in range(ncols):
             # parse num
-            d = divides[j]
             ch = data[i]
             if ch == 45:
                 sign = -1
@@ -157,6 +152,69 @@ def decompress_df(unsigned int ncols, unsigned int nrows, divs, dtypes,
             # skip ','
             i += 1
         row += 1
+    return nums
+
+
+def decompress_csv_np(unsigned int ncols,unsigned int nrows, list headers, int[:] divides, unsigned char[:] data):
+    cdef:
+        np.uint32_t i, d
+        np.int64_t[:] nums
+        np.ndarray arr
+
+    nums = decompress_nums(ncols, nrows, data)
+    dtypes = [(name, 'i8' if d == 0 else 'f8') for d, name in zip(divides, headers)]
+    arr = np.recarray(nrows, dtypes)
+    for i in range(ncols):
+        d = divides[i]
+        if d == 0:
+            arr[headers[i]] = nums[i::ncols]
+        else:
+            arr[headers[i]] = np.array(nums[i::ncols], 'f8') / (10 ** d)
+    return arr
+
+
+class AttrDict(dict):
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+
+def decompress_csv_py(unsigned int ncols,unsigned int nrows, list headers, int[:] divides, unsigned char[:] data):
+    cdef:
+        np.uint32_t i, j, d
+        np.int64_t[:] nums
+        np.int64_t num
+        list arr = []
+        dict dd
+        str name
+
+    for j in range(ncols):
+        divides[j] = 10 ** divides[j] 
+    nums = decompress_nums(ncols, nrows, data)
+    for i in range(nrows):
+        dd = {}
+        for j in range(ncols):
+            name = headers[j]
+            num = nums[i*ncols+j]
+            d = divides[j]
+            if d > 0:
+                dd[name] = num * 1. / d
+            else:
+                dd[name] = num
+        arr.append(AttrDict(dd))
+    return arr
+
+
+def decompress_np(unsigned int ncols, unsigned int nrows, divs, dtypes,
+                  headers, raws, unsigned char[:] data):
+    cdef:
+        np.uint64_t i, j
+        np.int64_t num, sign, k, d
+        np.int64_t[:] nums
+        np.int32_t[:] divides = np.array(divs, dtype=np.int32)
+        np.ndarray out, arr
+
+    nums = decompress_nums(ncols, nrows, data)
 
     if len(headers) == 0:
         # should be same type, restore to np.ndarray
@@ -172,12 +230,15 @@ def decompress_df(unsigned int ncols, unsigned int nrows, divs, dtypes,
         out = np.recarray(nrows, dtype=list(zip(headers, dtypes)))
         j, k = 0, 0
         for i, dt in enumerate(dtypes):
+            d = divides[i]
             type_ = np.dtype(dt)
             if np.issubdtype(type_, np.int) \
                     or np.issubdtype(type_, np.float) \
                     or np.issubdtype(type_, np.datetime64) \
                     or np.issubdtype(type_, np.timedelta64):
                 out[headers[i]] = arr[j::ncols].astype(dt)
+                if d > 1:
+                    out[headers[i]] /= d
                 j += 1
             else:
                 # assign raw data

@@ -1,8 +1,21 @@
 #!/usr/bin/env python
-import sys
+from glob import glob
 from setuptools import setup
 from setuptools.command.install import install
 from setuptools import find_packages
+
+
+class MyInstall(install):
+    def build(self):
+        import os
+        import sys
+        os.system('python -c "import tsc"')
+
+    def run(self):
+        install.run(self)
+        self.execute(self.build, (),
+                     msg="Running post install task")
+    
 
 setup(name='tsc',
       version='0.1.2',
@@ -14,6 +27,7 @@ setup(name='tsc',
       package_data={'tsc': ['*.pxd', '*.pyx', 'klib/*.h']},
       include_package_data=True,
       install_requires=['numpy', 'cython', 'brotli', 'pandas'],
+      cmdclass={'install': MyInstall},
       classifiers=[
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
