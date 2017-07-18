@@ -1,9 +1,11 @@
+import os
 import brotli
 import pyximport
 import numpy as np
 import pandas as pd
 from array import array
-pyximport.install(setup_args={'include_dirs': [np.get_include(), 'klib']})
+klib_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'klib'))
+pyximport.install(setup_args={'include_dirs': [np.get_include(), klib_dir]})
 
 from .algo import diff, diff_depth, undiff, undiff_depth
 from .converter import (
