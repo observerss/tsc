@@ -3,6 +3,7 @@ cimport numpy as np
 from libc.math cimport round, log
 cimport cython
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
+from .replaces import get_replaces
 
 
 @cython.boundscheck(False)
@@ -177,7 +178,17 @@ cpdef to_internal(np.int64_t ncols, np.int64_t nrows, np.int64_t[:] vals,
             # append comma
             buff[size] = 44
             size += 1
-    return bytes(head, 'utf-8') + bytes(buff[:size])
+    if size > 10000:
+        # will reduce size only on large datasets
+        replaces, replaced = get_replaces(bytearray(buff[:size]))
+        repls = []
+        for k, v in replaces:
+            repls.append(k)
+            repls.append(v)
+        head += '|'.join(repls) + '+'
+    else:
+        replaced = buff[:size]
+    return bytes(head, 'utf-8') + bytes(replaced)
 
 
 @cython.boundscheck(False)
@@ -191,13 +202,27 @@ cpdef parse_internal(bytes data):
 
     i = data.find(b'+')
     headers = data[:i].decode('utf-8').split(',')
+    
     ncols = len(headers)
     j = data.find(b'+', i+1)
     divides = np.ones(ncols, np.int64)
     for k, x in enumerate(data[i:j].decode('utf-8').split(',')):
         divides[k] = int(x)
-    csv = bytearray(data[j+1:])
-    n = len(data) - j - 1
+
+    i = j
+    j = data.find(b'+', i+1, i+55)
+    if j == -1:
+        j = i
+        csv = bytearray(data[j+1:])
+        n = len(data) - j - 1
+    else:
+        repls = data[i+1:j].split(b'|')
+        data = data[j+1:]
+        for i in reversed(range(len(repls) // 2)):
+            data = data.replace(repls[2*i+1], repls[2*i])
+        csv = bytearray(data)
+        n = len(data)
+    
     a = np.empty(n // 2, np.int64)
     size = 0
     i = 0

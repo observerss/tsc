@@ -3,7 +3,7 @@ import pyximport
 import numpy as np
 import pandas as pd
 from array import array
-pyximport.install(setup_args={'include_dirs': [np.get_include()]})
+pyximport.install(setup_args={'include_dirs': [np.get_include(), 'klib']})
 
 from .algo import diff, diff_depth, undiff, undiff_depth
 from .converter import (
@@ -11,7 +11,7 @@ from .converter import (
     parse_internal, to_csv, to_np)
 
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 
 
 def get_depth_params(headers):
