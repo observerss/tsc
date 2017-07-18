@@ -1,3 +1,1 @@
 include tsc/*.pyx
-include tsc/*.pxd
-include tsc/klib/*.h

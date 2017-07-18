@@ -103,7 +103,8 @@ cpdef parse_csv(bytes data, int precision=3):
                 divides[j] = max(divides[j], div)
                 
             if num > max_num:
-                raise ValueError('too high precision, give up')
+                num = 0
+                # raise ValueError('too high precision, give up')
             af[size] = num
             size += 1
 
@@ -307,7 +308,7 @@ cpdef to_csv(np.int64_t ncols, np.int64_t nrows, headers, np.int64_t[:] divides,
                     while k >= 0:
                         out[l] = temp[k] + 48
                         l += 1
-                        if k == d:
+                        if k == d and k > 0:
                             out[l] = 46
                             l += 1
                         k -= 1

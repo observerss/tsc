@@ -11,7 +11,7 @@ from .converter import (
     parse_internal, to_csv, to_np)
 
 
-__version__ = '0.2'
+__version__ = '0.2.1'
 
 
 def get_depth_params(headers):
