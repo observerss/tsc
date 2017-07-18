@@ -5,7 +5,7 @@ cimport cython
 from libc.math cimport log, ceil
 from libc.stdlib cimport rand, srand
 
-from .counter import ByteArrayCounter
+from .counter cimport ByteArrayCounter
 
 
 cdef inline double log2(double x):
@@ -13,15 +13,15 @@ cdef inline double log2(double x):
 
 
 @cython.cdivision(True)
-cdef inline int randint(int n):
+cdef inline np.int64_t randint(np.int64_t n):
     return rand() % n
 
 
 cpdef get_keys(np.int64_t k):
     cdef:
-        int i = 0, klen
+        np.int64_t i = 0, klen
         np.int32_t[:] keys 
-    klen = <int>ceil(log(k) / log(256))
+    klen = <np.int64_t>ceil(log(k) / log(256))
     keys = np.empty(klen, dtype=np.int32)
     while k > 0:
         keys[i] = k % 256
@@ -31,18 +31,20 @@ cpdef get_keys(np.int64_t k):
 
     
 cdef keys_to_str(np.int32_t[:] keys):
-    cdef int i = 0
+    cdef np.int64_t i = 0
     s = ''
     for i in range(keys.shape[0]):
         s += chr(keys[i])
     return s[::-1]
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef count_occurs(unsigned char[:] s, np.int32_t[:] keys):
     cdef:
-        int i = 0, j, k
-        int n = len(s), m = keys.shape[0]
-        int count = 0
+        np.int64_t i = 0, j, k
+        np.int64_t n = len(s), m = keys.shape[0]
+        np.int64_t count = 0
         
     while i < n:
         k = i
@@ -60,8 +62,8 @@ cdef count_occurs(unsigned char[:] s, np.int32_t[:] keys):
 
 cdef count_keys(np.int32_t[:] keys, unsigned char ch):
     cdef:
-        int i = 0, n = keys.shape[0]
-        int count = 0
+        np.int64_t i = 0, n = keys.shape[0]
+        np.int64_t count = 0
     while i < n:
         if keys[i] == ch:
             count += 1
@@ -72,16 +74,17 @@ cdef count_keys(np.int32_t[:] keys, unsigned char ch):
 cpdef get_replaces(bytearray delta):
     srand(0)
     cdef:
-        unsigned int ic, length, length2, i, n, j, found, v
+        np.int64_t ic, length, length2, i, n, j, found, v
         bytes codes = b'abcdefghijklmnopqrstuvwxyz'
-        unsigned char ch, ch0, ch1, ch2, ch3, ch4, ch5
-        int[5] freq5
-        int[6] chs
+        unsigned char ch, ch0, ch1, ch2, ch3, ch4, ch5, ch6
+        np.int64_t[5] freq5
+        np.int64_t[6] chs
         list replaces
         bytearray replaced
         np.int32_t[:] keys
         np.int64_t[:] ckeys
         np.int64_t val, k
+        ByteArrayCounter c, cc, ccc
         
     # don't try to optimise if not many value
     if len(delta) < 4096:
@@ -142,7 +145,7 @@ cpdef get_replaces(bytearray delta):
 
         ccc = ByteArrayCounter()
         for k, v in cc.most_common(5):
-            lenk = <int>ceil(log(k)/log(256))
+            lenk = <np.int64_t>ceil(log(k)/log(256))
             keys = get_keys(k)
             entropy2 = 0
             length2 = length - (lenk - 1) * count_occurs(replaced, keys)
@@ -160,7 +163,7 @@ cpdef get_replaces(bytearray delta):
             entropy2 *= length2 / 8
             
             if (entropy1 - entropy2) / entropy1 > 0.005:
-                ccc.set_item(k, <int>(entropy1 - entropy2))
+                ccc.set_item(k, <np.int64_t>(entropy1 - entropy2))
         if not ccc:
             break
         k, v = ccc.most_common(1)[0]

@@ -1,6 +1,7 @@
 import numpy as np
 cimport numpy as np
 cimport cython
+from .counter cimport Int64HashTable
 
 
 @cython.boundscheck(False)
@@ -32,17 +33,16 @@ cpdef diff_depth(np.int64_t ncols, np.int64_t nrows, np.int64_t[:] vals,
     :param end: ending volume index
     """
     cdef:
-        np.int64_t i, j, k, l, m, num, offset, price, ne
-        np.int64_t[:] last, copy
+        np.int64_t i, j, k, l, m, num, offset, price, ne, last_volume
+        np.int64_t[:] last
+        Int64HashTable pvd
 
     ne = excludes.size
     last = np.zeros(ncols, dtype=np.int64)
-    copy = np.zeros(ncols, dtype=np.int64)
+    pvd = Int64HashTable(100)
     offset = end - start
 
     for i in range(nrows):
-        for j in range(ncols):
-            copy[j] = last[j]
         for j in range(ncols - 1, -1, -1):
             l = i * ncols + j
             num = vals[l]
@@ -54,10 +54,10 @@ cpdef diff_depth(np.int64_t ncols, np.int64_t nrows, np.int64_t[:] vals,
                 if start <= j < end:
                     # volumes compare according to price
                     price = vals[l - offset]
-                    for m in range(start - offset, start):
-                        if copy[m] == price:
-                            vals[l] = num - copy[m + offset]
-                            break
+                    if price in pvd:
+                        last_volume = pvd.get_item(price)
+                        vals[l] -= last_volume
+                    pvd.set_item(price, num)
                 else:
                     vals[l] = num - last[j]
             last[j] = num
@@ -92,17 +92,16 @@ cpdef undiff_depth(np.int64_t ncols, np.int64_t nrows, np.int64_t[:] vals,
     :param end: ending volume index
     """
     cdef:
-        np.int64_t i, j, k, l, m, num, offset, price, ne
-        np.int64_t[:] last, copy
+        np.int64_t i, j, k, l, m, num, offset, price, ne, last_volume
+        np.int64_t[:] last
+        Int64HashTable pvd
 
     last = np.zeros(ncols, dtype=np.int64)
-    copy = np.zeros(ncols, dtype=np.int64)
+    pvd = Int64HashTable(100)
     offset = end - start
     ne = excludes.size
 
     for i in range(nrows):
-        for j in range(ncols):
-            copy[j] = last[j]
         for j in range(ncols):
             l = i * ncols + j
             for k in range(ne):
@@ -113,10 +112,10 @@ cpdef undiff_depth(np.int64_t ncols, np.int64_t nrows, np.int64_t[:] vals,
                 if start <= j < end:
                     # volumes compare according to price
                     price = vals[l - offset]
-                    for m in range(start - offset, start):
-                        if copy[m] == price:
-                            vals[l] = copy[m + offset] + vals[l]
-                            break
+                    if price in pvd:
+                        last_volume = pvd.get_item(price)
+                        vals[l] += last_volume
+                    pvd.set_item(price, vals[l])
                 else:
                     vals[l] = last[j] + vals[l]
             last[j] = vals[l]

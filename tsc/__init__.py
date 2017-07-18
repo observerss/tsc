@@ -13,10 +13,11 @@ from .converter import (
     parse_internal, to_csv, to_np)
 
 
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 
 
 def get_depth_params(headers):
+    ts_cols = ['timestamp', 'close', 'pre_close', 'pclose']
     if ('ap1' in headers and 'av1' in headers) or \
             ('bp1' in headers and 'bv1' in headers):
         if 'av1' in headers:
@@ -34,7 +35,15 @@ def get_depth_params(headers):
         end = start + offset
         excludes = array('l')
         for i, h in enumerate(headers):
-            if h not in ['timestamp', 'close', 'pre_close', 'pclose'] \
+            if h not in ts_cols \
+                    and not h[-1].isdigit():
+                excludes.append(i)
+        return excludes, start, end
+    elif 'timestamp' in headers:
+        start = end = 0
+        excludes = array('l')
+        for i, h in enumerate(headers):
+            if h not in ts_cols \
                     and not h[-1].isdigit():
                 excludes.append(i)
         return excludes, start, end

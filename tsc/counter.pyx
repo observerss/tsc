@@ -7,7 +7,7 @@ cdef class HashTable:
 
 
 cdef class Int64HashTable(HashTable):
-    cdef kh_int64_t *table
+    #  cdef kh_int64_t *table
 
     def __cinit__(self, size_hint=1):
         self.table = kh_init_int64()
@@ -22,7 +22,7 @@ cdef class Int64HashTable(HashTable):
             kh_destroy_int64(self.table)
             self.table = NULL
 
-    def __contains__(self, object key):
+    def __contains__(self, int64_t key):
         cdef khiter_t k
         k = kh_get_int64(self.table, key)
         return k != self.table.n_buckets
@@ -39,7 +39,7 @@ cdef class Int64HashTable(HashTable):
     cpdef size(self):
         return self.table.size
 
-    cpdef get_item(self, int64_t val):
+    cdef Py_ssize_t get_item(self, int64_t val):
         cdef khiter_t k
         k = kh_get_int64(self.table, val)
         if k != self.table.n_buckets:
@@ -47,7 +47,7 @@ cdef class Int64HashTable(HashTable):
         else:
             raise KeyError(val)
 
-    cpdef set_item(self, int64_t key, Py_ssize_t val):
+    cdef set_item(self, int64_t key, Py_ssize_t val):
         cdef:
             khiter_t k
             int ret = 0
@@ -71,7 +71,7 @@ cdef class Int64HashTable(HashTable):
             
 cdef class ByteArrayCounter(Int64HashTable):
         
-    cpdef feed(self, unsigned char[:] data):
+    cdef feed(self, unsigned char[:] data):
         cdef:
             unsigned int i, n
             unsigned char ch
@@ -81,7 +81,7 @@ cdef class ByteArrayCounter(Int64HashTable):
             self.increase(ch, 1)
         return n
     
-    cpdef increase(self, int64_t key, Py_ssize_t val):
+    cdef increase(self, int64_t key, Py_ssize_t val):
         cdef:
             khiter_t k
             int ret = 0
@@ -98,7 +98,7 @@ cdef class ByteArrayCounter(Int64HashTable):
         else:
             self.table.vals[k] += val
             
-    cpdef most_common(self, Py_ssize_t size=0):
+    cdef most_common(self, Py_ssize_t size=0):
         cdef:
             unsigned int i
             long idx
