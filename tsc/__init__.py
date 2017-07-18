@@ -13,11 +13,12 @@ from .converter import (
     parse_internal, to_csv, to_np)
 
 
-__version__ = '0.2.3'
+__version__ = '0.2.3b'
 
 
 def get_depth_params(headers):
-    ts_cols = ['timestamp', 'close', 'pre_close', 'pclose']
+    ts_cols = ['timestamp', 'pre_close',
+        'open', 'high', 'low', 'close', 'price']
     if ('ap1' in headers and 'av1' in headers) or \
             ('bp1' in headers and 'bv1' in headers):
         if 'av1' in headers:
@@ -39,7 +40,7 @@ def get_depth_params(headers):
                     and not h[-1].isdigit():
                 excludes.append(i)
         return excludes, start, end
-    elif 'timestamp' in headers:
+    elif set(ts_cols) & set(headers):
         start = end = 0
         excludes = array('l')
         for i, h in enumerate(headers):
