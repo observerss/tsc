@@ -139,7 +139,7 @@ cpdef parse_csv(bytes data, int precision=3):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef to_internal(np.int64_t ncols, np.int64_t nrows, np.int64_t[:] vals,
-            headers, np.int64_t[:] divides):
+            headers, np.int64_t[:] divides, mode='brolti'):
     cdef:
         np.int64_t i, j, size, num, tempi
         np.int8_t[:] temp = np.zeros(32, dtype=np.int8)
@@ -180,14 +180,14 @@ cpdef to_internal(np.int64_t ncols, np.int64_t nrows, np.int64_t[:] vals,
             size += 1
     if size > 10000:
         # will reduce size only on large datasets
-        replaces, replaced = get_replaces(bytearray(buff[:size]))
+        replaces, replaced = get_replaces(bytes(buff[:size]), mode=mode)
         repls = []
         for k, v in replaces:
             repls.append(k)
             repls.append(v)
         head += '|'.join(repls) + '+'
     else:
-        replaced = buff[:size]
+        replaced = bytes(buff[:size])
     return bytes(head, 'utf-8') + bytes(replaced)
 
 
@@ -210,7 +210,7 @@ cpdef parse_internal(bytes data):
         divides[k] = int(x)
 
     i = j
-    j = data.find(b'+', i+1, i+55)
+    j = data.find(b'+', i+1, i+4096)
     if j == -1:
         j = i
         csv = bytearray(data[j+1:])
