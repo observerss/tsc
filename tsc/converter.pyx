@@ -15,24 +15,33 @@ cpdef parse_df(df, int precision=3):
         np.float64_t num
         np.int64_t[:] divides
         np.int64_t[:] ai
-        np.float64_t[:, :] vals = df.values
+        np.float64_t[:, :] vals
 
     headers = list(df.columns)
     ncols = len(headers)
     nrows = df.shape[0]
     divides = np.ones(ncols, dtype=np.int64)
-    ai = np.empty(ncols*nrows, dtype=np.int64)
-    for i in range(nrows):
-        for j in range(ncols):
-            num = vals[i, j]
-            d = 1
-            while abs(num - round(num)) > 1e-6:
-                d *= 10
-                num *= 10
-            divides[j] = max(divides[j], d)
-    for i in range(nrows):
-        for j in range(ncols):
-            ai[i * ncols + j] = <np.int64_t>round(vals[i, j] * divides[j])
+    try:
+        vals = df.values
+    except:
+        try:
+            # type error, try int64
+            ai = df.values.astype(np.int64).reshape(ncols * nrows)
+        except:
+            raise TypeError('dataframe should only contain numbers')
+    else:
+        ai = np.empty(ncols*nrows, dtype=np.int64)
+        for i in range(nrows):
+            for j in range(ncols):
+                num = vals[i, j]
+                d = 1
+                while abs(num - round(num)) > 1e-6:
+                    d *= 10
+                    num *= 10
+                divides[j] = max(divides[j], d)
+        for i in range(nrows):
+            for j in range(ncols):
+                ai[i * ncols + j] = <np.int64_t>round(vals[i, j] * divides[j])
     return ncols, nrows, headers, divides, ai
 
 
@@ -364,9 +373,10 @@ cpdef to_np(np.int64_t ncols, np.int64_t nrows, headers, np.int64_t[:] divides, 
     cdef:
         np.int64_t i, d
     dtypes = []
+    used = {}
     for i in range(ncols):
         d = divides[i]
-        name = get_name(headers[i])
+        name = get_name(headers[i], used)
         headers[i] = name
         dtypes.append((name, 'i8' if d == 1 else 'f8')) 
     a = np.recarray(nrows, dtypes)

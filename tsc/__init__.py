@@ -17,7 +17,7 @@ from zlib import compress as pack1, decompress as unpack1
 from brotli import compress as pack2, decompress as unpack2
 from .paq import compress as pack3, decompress as unpack3
 
-__version__ = '0.3.2'
+__version__ = '0.3.3'
 
 
 packs = [None, pack1, pack2, pack3]
